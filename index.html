@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Html Sayfam</title>
+    <style>
+        h1{
+            background-color: turquoise;
+            text-align: center;
+            border:5px ridge black;
+            padding:15px;
+           
+        }
+        #urunAdi{
+            background-color: turquoise;
+            border:2px ridge black;
+        }
+        #seriNo{
+            background-color: turquoise;
+            border:2px ridge black;
+        }
+        #labAdi{
+            background-color:turquoise;
+            border:2px ridge black;
+        }
+        #durum{
+
+            background-color:turquoise;
+            border:2px ridge black;
+    
+        }
+        #submit{
+            border:2px ridge black;
+            padding:10px;
+            
+        }
+        .silBtn{
+            background-color: red;
+            color: white;
+            border: 2px ridge black;
+            padding: 5px;
+        }
+
+    </style>
+</head>
+<body>
+<h1>Siemens Lab Envanter Sistemi</h1>
+<p>Bu sayfa laboratuvar cihazlarını eklemek ve takip etmek için hazırlanmıştır.</p>
+<h2>Yeni ürün ekle</h2>
+<form>
+    <label for="urunAdi">Ürün Adı:</label><br>
+    <input type="text" id="urunAdi" ><br>
+    <br>
+    <label for="seriNo">Seri No:</label><br>
+    <input type="text" id="seriNo"><br>
+    <br>
+    <label for="labAdi">Lab Adı:</label><br>
+    <input type="text" id="labAdi"><br>
+    <br>
+    <label for="durum">Durum:</label><br>
+    <input type="text" id="durum">
+    <br>
+    <br>
+    <button id="submit" type="submit">Gönder</button>
+</form>
+<h2>Envanter Listesi</h2>
+<ul id="envanterListesi"></ul>
+
+<script>
+    const urunInput=document.getElementById("urunAdi");//Kutuyu seçtim.
+    const seriInput=document.getElementById("seriNo");
+    const labInput=document.getElementById("labAdi");
+    const durumInput=document.getElementById("durum");
+    const submitBtn=document.getElementById("submit");
+
+    const liste = document.getElementById("envanterListesi");
+
+    submitBtn.addEventListener("click",function(event){
+        event.preventDefault();//Sayfanın yenilenmesini durdurdum.
+        const urunDegeri=urunInput.value;//Kutunun içindeki değeri seçiyorum.
+        const seriDegeri=seriInput.value;
+        const labDegeri=labInput.value;
+        const durumDegeri=durumInput.value;
+
+    if(urunDegeri === ""){
+        alert("Ürün adını girmediniz!");
+    }else if(seriDegeri === ""){
+        alert("Seri numarasını girmediniz!");
+    }else if(labDegeri === ""){//=== sıkı kontroldür.
+        alert("Lab değerini girmediniz!");
+    }else if(durumDegeri === ""){
+        alert("Durum bilgisini girmediniz!");
+    }
+    else{
+        const yeniEleman=document.createElement("li");
+        yeniEleman.innerHTML="Ürün Adı: " + urunDegeri + " Seri No: " + seriDegeri + 
+        " Lab Adı: " + labDegeri + " Durum : " + durumDegeri + ' <button class="silBtn">Sil</button>';
+        liste.appendChild(yeniEleman);
+        const silButonu=yeniEleman.querySelector(".silBtn");
+        silButonu.addEventListener("click",function(){
+            yeniEleman.remove();
+        });
+
+
+        urunInput.value="";
+        seriInput.value="";
+        labInput.value="";
+        durumInput.value="";
+    }
+
+       
+
+        
+
+    
+
+
+    }
+);
+
+
+   
+
+</script>
+
+
+</body>
+</html>
