@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Html Sayfam</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         h1{
             background-color: turquoise;
@@ -37,10 +38,65 @@
         }
         .silBtn{
             background-color: red;
+            margin:2px;
             color: white;
             border: 2px ridge black;
             padding: 5px;
         }
+        #reader{
+            width: 300px;
+            margin: 20px auto;
+            border: 2px ridge black;
+
+        }
+        .modal{
+            display : none; /*Başlangıçta gizli tut*/
+            position :fixed;/*Sayfa kaydırılsa bile ekranda sbt kalsın*/
+            z-index: 1000;/*Sayfadaki her şeyin en üstünde dursun*/
+            left: 0;
+            top:0;
+            width: 100%;/*Ekranı enlemesine tamamen kaplasın*/
+            height: 100%;/*Ekranı boylamasına tamamen kaplasın*/
+            background-color:rgba(0,0,0,0.6);
+         }
+         
+         .modal_icerik{
+            background-color:whitesmoke;
+            margin: 15% auto;/*Kartı yukarıdan aşağıya %15 oranında indir ve yatayda ortala*/
+            padding: 25px;/*İçindeki yazılar ve butonlar kenarlara sıkışmasın*/
+            border: 2px ridge black;/*ridge çıkntı verir görünüme */
+            width: 350px;
+            border-radius: 8px;/*Köşeleri hafifçe yuvarlattık*/
+            position: relative;
+           /* box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3); /* 8. Karta derinlik veren şık bir gölge */
+         }
+         .kapatBtn{
+            color: #aaa;/*Başlangıçta hafif sönük gri*/
+            position: absolute;/*modal_icerik kutusunu referans alarak serbest hareket et*/
+            top: 10px;/*Üst duvardan 10 piksel aşağıda dur*/
+            right: 15px;/*Sağ duvardan 15 piksel içeride dur.*/
+            font-size:28px;/*Çarpı işaretini belirgin ve büyük yap*/
+            font-weight:bold;
+            cursor:pointer;/*Üzerine mouse gelince el işareti çıksın(tıklanabilir hissi)*/
+            
+         }
+         .kapatBtn:hover{/* Mouse ile çarpının üzerine gelindiğinde */
+            color:red;
+         }
+         #modalDetay p {
+            margin:12px 0;
+            font-size:1.1rem;
+
+         }
+         #modalDetay strong{
+            color:turquoise;
+         }
+
+       
+        
+
+        
+      
 
     </style>
 </head>
@@ -63,17 +119,44 @@
     <br>
     <br>
     <button id="submit" type="submit">Gönder</button>
-</form>
+</form> 
+<div id="reader"></div>
+
 <h2>Envanter Listesi</h2>
 <ul id="envanterListesi"></ul>
+<div id="cihazModal" class="modal">
+    <div class="modal_icerik">
+        <span class="kapatBtn">&times;</span>
+        <h2 id="modalBaslik">Cihaz Bilgisi</h2>
+        <hr> <div id="modalDetay"></div>
+
+    </div>
+</div>
+
 
 <script>
     const urunInput=document.getElementById("urunAdi");//Kutuyu seçtim.
-    const seriInput=document.getElementById("seriNo");
+    const seriInput=document.getElementById("seriNo");// id,class,type attribute bunlar.
     const labInput=document.getElementById("labAdi");
     const durumInput=document.getElementById("durum");
     const submitBtn=document.getElementById("submit");
 
+    const modal=document.getElementById("cihazModal");//En dıştaki siyah perde kutumuz
+    const modalBaslik=document.getElementById("modalBaslik");// "Cihaz Bilgisi" yazan başlığımız
+    const modalDetay=document.getElementById("modalDetay");// İçine dinamik bilgileri basacağımız boş kutu
+    const kapatBtn=document.querySelector(".kapatBtn");// Sağ üstteki kapatma çarpısı
+    //Çarpı butonu tıklandığında modalı gizleme fonksiyonu
+    kapatBtn.addEventListener("click",function() {
+        modal.style.display="none";
+
+    });
+    window.addEventListener("click",function(event){
+        if(event.target===modal){
+            modal.style.display="none";
+        }
+
+    }
+);
     const liste = document.getElementById("envanterListesi");
 
     submitBtn.addEventListener("click",function(event){
@@ -92,14 +175,46 @@
     }else if(durumDegeri === ""){
         alert("Durum bilgisini girmediniz!");
     }
+    
     else{
+        //LocalStorage mantığı
+        /*const urunPaketi={
+            urun: urunDegeri,
+            seri: seriDegeri,
+            lab: labDegeri,
+            durum: durumDegeri
+        };*/
+        const urunPaketi={
+            id: Date.now(),//Her ürüne bir parmak izi kimlik veriyoruz.
+            urun: urunDegeri,
+            seri: seriDegeri,
+            lab: labDegeri,
+            durum: durumDegeri
+
+        };
+        console.log("Yeni oluşturulan ID:",urunPaketi.id);
+
+        let mevcutUrunler= JSON.parse(localStorage.getItem("kayitliUrunler")) || [];//Biz yeni bir ürün eklediğimizde, eski ürünleri silmek istemiyoruz.
+        //Önce hafızada ne var bir görelim, onun üzerine ekleme yapacağız.
+        mevcutUrunler.push(urunPaketi);
+        localStorage.setItem("kayitliUrunler",JSON.stringify(mevcutUrunler));
+
         const yeniEleman=document.createElement("li");
+        //İŞTE SİHİRLİ SATIR BURASI:
+        yeniEleman.setAttribute("data-id",urunPaketi.id);
+
         yeniEleman.innerHTML="Ürün Adı: " + urunDegeri + " Seri No: " + seriDegeri + 
         " Lab Adı: " + labDegeri + " Durum : " + durumDegeri + ' <button class="silBtn">Sil</button>';
         liste.appendChild(yeniEleman);
         const silButonu=yeniEleman.querySelector(".silBtn");
         silButonu.addEventListener("click",function(){
             yeniEleman.remove();
+            const silinecekID=yeniEleman.getAttribute("data-id");
+            let mevcutUrunler=JSON.parse(localStorage.getItem("kayitliUrunler")) || [];
+            mevcutUrunler=mevcutUrunler.filter(urun=>urun.id.toString()!==silinecekID);
+            localStorage.setItem("kayitliUrunler",JSON.stringify(mevcutUrunler));
+
+
         });
 
 
@@ -109,15 +224,96 @@
         durumInput.value="";
     }
 
-       
-
-        
-
-    
-
-
     }
+
 );
+window.addEventListener("load",function(){
+    let kayitliSistem= JSON.parse(localStorage.getItem("kayitliUrunler"))|| [];
+    
+    kayitliSistem.forEach(function(urun){
+        // 1. Buradaki 'urun' değişkeni, listenin o anki elemanıdır.
+    // 2. 'function' kelimesi, bu işlemin bir "eylem bloğu" olduğunu belirtir.
+    const yeniEleman=document.createElement("li");
+    yeniEleman.setAttribute("data-id",urun.id);
+    yeniEleman.innerHTML="Ürün Adı: " + urun.urun + " Seri No: " + urun.seri + " Lab Adı: " +
+    urun.lab + " Durum: " + urun.durum +' <button class="silBtn">Sil</button>';
+    liste.appendChild(yeniEleman);
+    const silButonu=yeniEleman.querySelector(".silBtn");//Önce butonu bulup bir değişkene atadın.
+    silButonu.addEventListener("click",function(){//Sonra o değişkene tıklama özelliği verdin.
+    yeniEleman.remove();
+    //1.Tıklanan elemanın ID'sini alalım.
+    const silinecekID=yeniEleman.getAttribute("data-id");
+    //2.Hafızadaki tüm listeyi çekelim.
+    let mevcutUrunler=JSON.parse(localStorage.getItem("kayitliUrunler")) || [];
+    mevcutUrunler= mevcutUrunler.filter(urun=>urun.id.toString()!==silinecekID);
+    localStorage.setItem("kayitliUrunler",JSON.stringify(mevcutUrunler));
+});
+    });
+        });
+//1.ADIM:QR Kod Başarı Fonksiyonunu API Formatına Dönüştürme
+    async function onScanSucces(decodedText, decodedResult){
+        console.log("Okunan İçerik:",decodedText);
+        // İnternet kopması veya sunucu çökmesi ihtimaline karşı try-catch koruması açıyoruz
+        try{
+            // Arkadaşının backend sunucusuna istek atıyoruz ve cevap gelene kadar 'await' ile bekliyoruz
+        // Şimdilik temsili bir URL var, linki verilince sadece burayı değiştireceğim
+        const response =await fetch("https://api.siemenslab.com/cihazlar/"+decodedText);
+        // Sunucudan gelen ham veriyi JavaScript objesine (JSON) çeviriyoruz ve yine bekliyoruz
+        const veri=await response.json();
+        // Eğer sunucu "Cihazı buldum" (HTTP 200 OK) yanıtı verdiyse
+        if(response.ok){
+            modalBaslik.innerHTML="🎉 Cihaz Envanterde Mevcut!";
+            modalBaslik.style.color="#2e7d32";
+            // Verileri artık localStorage'dan değil, sunucudan gelen 'veri' paketinden okuyoruz
+            modalDetay.innerHTML=`
+                 <p><strong>Ürün Adı:</strong>${veri.urun}</p>
+                 <p><strong>Seri No:</strong>${veri.seri}</p>
+                 <p><strong>Lab Adı:</strong>${veri.lab}</p>
+                 <p><strong>Durum:</strong>${veri.durum}</p>
+            `;
+
+        }else{
+            //Sunucu cihazı bulamadıysa (HTTP 404 Not Found)
+            modalBaslik.innerHTML="⚠️ Cihaz Bulunamadı!";
+            modalBaslik.style.color="#c62828";
+            modalDetay.innerHTML=`
+                  <p>Bu QR kod sahip bir cihaz veri tabanında kayıtlı değil!</p>
+                  <p><strong>Okunan kod:</strong>${decodedText}</p>
+            `;
+        }
+          }catch(hata){
+            // İnternet bağlantısı tamamen koptuğunda veya sunucuya ulaşılamadığında burası çalışır
+            modalBaslik.innerHTML="💥 Sunucu Bağlantı Hatası!";
+            modalBaslik.style.color="#d32f2f";
+            modalDetay.innerHTML=`
+               <p>Arka plan sunucusuyla iletişim kurulamadı.Lütfen internetinizi veya sunucu durumunuzu kontrol edin.</p>
+
+            `;
+            console.error("Bağlantı hatası detayı:",hata);
+            // Bilgiler if, else veya catch içinde hazırlandı; şimdi sahne ışıklarını açıp modalı gösteriyoruz
+            modal.style.display="block";
+          }
+
+      
+      
+        } 
+    //2.Tarayıcı ayarları ve kurulumu
+    let html5QrcodeScanner=new Html5QrcodeScanner(// Html5QrcodeScanner aslındabi classtır.
+        "reader",//HTML'deki div'in ID'si,reader bir parametredir.
+        {
+            fps:10,
+            qrbox: 250
+
+        }
+
+    );
+    //3.Başlatma
+    html5QrcodeScanner.render(onScanSucces);
+    //render aynı zamanda html5QrcodeScanner objesinin bi metodudur.
+
+
+
+
 
 
    
